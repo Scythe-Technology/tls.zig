@@ -585,7 +585,12 @@ pub const NonBlock = struct {
 
         var n: usize = 0;
         while (n < cleartext.len and output.end < output.buffer.len) {
-            n += try self.inner.write(cleartext[n..]);
+            const clear_slice = cleartext[n..];
+            if (n > 0) {
+                const encrypted_len = self.inner.cipher.recordLen(clear_slice.len);
+                if (output.end + encrypted_len > output.buffer.len) break;
+            }
+            n += try self.inner.write(clear_slice);
         }
         return .{
             .cleartext_pos = n,
